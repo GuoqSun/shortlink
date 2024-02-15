@@ -20,7 +20,7 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * 根据用户名查询用户信息
+     * 根据用户名查询脱敏用户信息
      */
 
     @GetMapping("/api/shortlink/v1/user/{username}")
