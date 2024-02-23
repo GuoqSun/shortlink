@@ -2,7 +2,7 @@ package com.sgq.shortlink.admin.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.sgq.shortlink.admin.common.convention.result.Result;
-import com.sgq.shortlink.admin.remote.dto.ShortLinkRemoteService;
+import com.sgq.shortlink.admin.remote.ShortLinkRemoteService;
 import com.sgq.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import com.sgq.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;

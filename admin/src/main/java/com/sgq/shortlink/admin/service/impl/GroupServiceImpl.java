@@ -11,12 +11,16 @@ import com.sgq.shortlink.admin.dao.mapper.GroupMapper;
 import com.sgq.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
 import com.sgq.shortlink.admin.dto.req.ShortLinkGroupUpdateReqDTO;
 import com.sgq.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
+import com.sgq.shortlink.admin.remote.ShortLinkRemoteService;
+import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.sgq.shortlink.admin.service.GroupService;
 import com.sgq.shortlink.admin.util.RandomStringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 短链接分组接口实现层
@@ -24,6 +28,13 @@ import java.util.List;
 @Slf4j
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
+
+    /**
+     * 后续更改为SpringCloud
+     */
+    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
+    };
+
     @Override
     public void saveGroup(String groupName) {
         String gid;
@@ -49,7 +60,13 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(GroupDO::getSortOrder, GroupDO::getUpdateTime);
         List<GroupDO> groupDOList = baseMapper.selectList(queryWrapper);
-        return BeanUtil.copyToList(groupDOList, ShortLinkGroupRespDTO.class);
+        List<ShortLinkGroupCountQueryRespDTO> linkList = shortLinkRemoteService
+                .listGroupShortLinkCount(groupDOList.stream().map(GroupDO::getGid).toList()).getData();
+        List<ShortLinkGroupRespDTO> shortLinkGroupRespDTOList = BeanUtil.copyToList(groupDOList, ShortLinkGroupRespDTO.class);
+        Map<String, Integer> counts = linkList.stream()
+                .collect(Collectors.toMap(ShortLinkGroupCountQueryRespDTO::getGid, ShortLinkGroupCountQueryRespDTO::getShortLinkCount));
+        return shortLinkGroupRespDTOList.stream()
+                .peek(result -> result.setShortLinkCount(counts.get(result.getGid()))).toList();
     }
 
     @Override
