@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 public class ShortLinkController {
+
     /**
      * 后续更改为SpringCloud
      */
