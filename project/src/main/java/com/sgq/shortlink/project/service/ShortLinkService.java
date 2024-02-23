@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.sgq.shortlink.project.dao.entity.ShortLinkDO;
 import com.sgq.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import com.sgq.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import com.sgq.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
 import com.sgq.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import com.sgq.shortlink.project.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.sgq.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -33,8 +34,16 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
 
     /**
      * 查询短链接分组内数量
+     *
      * @param requestParam 查询短链接分组内数量请求参数
      * @return 查询短链接分组内数量响应
      */
     List<ShortLinkGroupCountQueryRespDTO> ListGroupShortLinkCount(List<String> requestParam);
+
+    /**
+     * 修改读链接
+     *
+     * @param requestParam 修改短链接请求参数
+     */
+    void updateShortLink(ShortLinkUpdateReqDTO requestParam);
 }

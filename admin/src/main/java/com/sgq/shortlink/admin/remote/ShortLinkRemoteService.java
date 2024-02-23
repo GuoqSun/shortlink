@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.sgq.shortlink.admin.common.convention.result.Result;
 import com.sgq.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import com.sgq.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import com.sgq.shortlink.admin.remote.dto.req.ShortLinkUpdateReqDTO;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
@@ -62,5 +63,12 @@ public interface ShortLinkRemoteService {
         });
     }
 
-
+    /**
+     * 修改短链接
+     *
+     * @param requestParam 修改短链接请求参数
+     */
+    default void updateShortLink(ShortLinkUpdateReqDTO requestParam) {
+        HttpUtil.post("http://localhost:8001/api/shortlink/v1/update", JSON.toJSONString(requestParam));
+    }
 }
