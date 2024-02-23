@@ -15,6 +15,11 @@ spring:
       port: 6379
       password: 123456
 
+  mvc:
+    view:
+      prefix: /templates/
+      suffix: .html
+
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
