@@ -7,10 +7,7 @@ import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.sgq.shortlink.admin.common.convention.result.Result;
 import com.sgq.shortlink.admin.remote.dto.req.*;
-import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
-import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
-import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
-import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkStatsRespDTO;
+import com.sgq.shortlink.admin.remote.dto.resp.*;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
@@ -128,8 +125,29 @@ public interface ShortLinkRemoteService {
         HttpUtil.post("http://localhost:8001/api/shortlink/v1/recycle-bin/remove", JSON.toJSONString(requestParam));
     }
 
+    /**
+     * 访问单个短链接指定时间内监控数据
+     *
+     * @param requestParam 访问短链接监控请求参数
+     * @return 短链接监控信息
+     */
     default Result<ShortLinkStatsRespDTO> oneShortLinkStats(ShortLinkStatsReqDTO requestParam) {
         String resultPageStr = HttpUtil.get("http://localhost:8001/api/shortlink/v1/stats", BeanUtil.beanToMap(requestParam));
+        return JSON.parseObject(resultPageStr, new TypeReference<>() {
+        });
+    }
+
+    /**
+     * 访问单个短链接指定时间内监控访问记录数据
+     *
+     * @param requestParam 访问短链接监控访问记录请求参数
+     * @return 短链接监控访问记录信息
+     */
+    default Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLinkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam) {
+        Map<String, Object> stringObjectMap = BeanUtil.beanToMap(requestParam, false, true);
+        stringObjectMap.remove("orders");
+        stringObjectMap.remove("records");
+        String resultPageStr = HttpUtil.get("http://localhost:8001/api/shortlink/v1/accessRecord", stringObjectMap);
         return JSON.parseObject(resultPageStr, new TypeReference<>() {
         });
     }
