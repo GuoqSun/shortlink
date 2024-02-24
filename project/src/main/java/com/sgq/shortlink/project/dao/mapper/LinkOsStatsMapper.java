@@ -9,6 +9,10 @@ import org.apache.ibatis.annotations.Param;
  * 操作系统统计访问持久层
  */
 public interface LinkOsStatsMapper extends BaseMapper<LinkOsStatsDO> {
+
+    /**
+     * 记录操作系统访问监控数据
+     */
     @Insert("""
             INSERT INTO
               t_link_os_stats (
