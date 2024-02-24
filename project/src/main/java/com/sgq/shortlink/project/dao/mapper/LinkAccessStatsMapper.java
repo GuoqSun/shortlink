@@ -24,13 +24,11 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
                 #{linkAccessStats.fullShortUrl},#{linkAccessStats.gid},#{linkAccessStats.date},
                 #{linkAccessStats.pv},#{linkAccessStats.uv},#{linkAccessStats.uip},#{linkAccessStats.hour},#{linkAccessStats.weekday},
                 NOW(),NOW(),0
-              ) ON DUPLICATE KEY
-            UPDATE
+              ) ON DUPLICATE KEY UPDATE
               pv = pv + #{linkAccessStats.pv},
               uv = uv + #{linkAccessStats.uv},
               uip = uip + #{linkAccessStats.uip},
               update_time = NOW();
-            """
-    )
+            """)
     void shortLinkStats(@Param("linkAccessStats") LinkAccessStatsDO linkAccessStatsDO);
 }

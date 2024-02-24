@@ -10,29 +10,28 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * 短链接基础访问监控实体
+ * 短链接地区访问监控实体
  */
 @Data
-@AllArgsConstructor
+@TableName("t_link_locale_stats")
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-@TableName("t_link_access_stats")
-public class LinkAccessStatsDO extends BaseDO {
-
+public class LinkLocaleStatsDO extends BaseDO {
     /**
      * id
      */
     private Long id;
 
     /**
-     * 分组标识
-     */
-    private String gid;
-
-    /**
      * 完整短链接
      */
     private String fullShortUrl;
+
+    /**
+     * 分组标识
+     */
+    private String gid;
 
     /**
      * 日期
@@ -42,25 +41,25 @@ public class LinkAccessStatsDO extends BaseDO {
     /**
      * 访问量
      */
-    private Integer pv;
+    private Integer cnt;
 
     /**
-     * 独立访问数
+     * 省份名称
      */
-    private Integer uv;
+    private String province;
 
     /**
-     * 独立ip数
+     * 市名称
      */
-    private Integer uip;
+    private String city;
 
     /**
-     * 小时
+     * 城市编码
      */
-    private Integer hour;
+    private String adcode;
 
     /**
-     * 星期
+     * 国家标识
      */
-    private Integer weekday;
+    private String country;
 }
