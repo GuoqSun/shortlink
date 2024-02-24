@@ -1,5 +1,6 @@
 package com.sgq.shortlink.admin.remote;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
@@ -9,6 +10,7 @@ import com.sgq.shortlink.admin.remote.dto.req.*;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
+import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkStatsRespDTO;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
@@ -110,17 +112,25 @@ public interface ShortLinkRemoteService {
 
     /**
      * 恢复短链接
+     *
      * @param requestParam 恢复短链接请求参数
      */
-    default void recoverRecycleBin(RecycleBinRecoverReqDTO requestParam){
+    default void recoverRecycleBin(RecycleBinRecoverReqDTO requestParam) {
         HttpUtil.post("http://localhost:8001/api/shortlink/v1/recycle-bin/recover", JSON.toJSONString(requestParam));
     }
 
     /**
      * 移除短链接
+     *
      * @param requestParam 移除短链接请求参数
      */
-    default void removeRecycleBin(RecycleBinRemoveReqDTO requestParam){
+    default void removeRecycleBin(RecycleBinRemoveReqDTO requestParam) {
         HttpUtil.post("http://localhost:8001/api/shortlink/v1/recycle-bin/remove", JSON.toJSONString(requestParam));
+    }
+
+    default Result<ShortLinkStatsRespDTO> oneShortLinkStats(ShortLinkStatsReqDTO requestParam) {
+        String resultPageStr = HttpUtil.get("http://localhost:8001/api/shortlink/v1/stats", BeanUtil.beanToMap(requestParam));
+        return JSON.parseObject(resultPageStr, new TypeReference<>() {
+        });
     }
 }
