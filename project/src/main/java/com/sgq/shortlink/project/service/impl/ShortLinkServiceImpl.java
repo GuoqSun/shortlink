@@ -19,14 +19,8 @@ import com.sgq.shortlink.project.common.convention.exception.ClientException;
 import com.sgq.shortlink.project.common.convention.exception.ServiceException;
 import com.sgq.shortlink.project.common.database.BaseDO;
 import com.sgq.shortlink.project.common.enums.VailDateTypeEnum;
-import com.sgq.shortlink.project.dao.entity.LinkAccessStatsDO;
-import com.sgq.shortlink.project.dao.entity.LinkLocaleStatsDO;
-import com.sgq.shortlink.project.dao.entity.ShortLinkDO;
-import com.sgq.shortlink.project.dao.entity.ShortLinkGotoDO;
-import com.sgq.shortlink.project.dao.mapper.LinkAccessStatsMapper;
-import com.sgq.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
-import com.sgq.shortlink.project.dao.mapper.ShortLinkGotoMapper;
-import com.sgq.shortlink.project.dao.mapper.ShortLinkMapper;
+import com.sgq.shortlink.project.dao.entity.*;
+import com.sgq.shortlink.project.dao.mapper.*;
 import com.sgq.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import com.sgq.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import com.sgq.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
@@ -79,6 +73,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final RedissonClient redissonClient;
     private final LinkAccessStatsMapper linkAccessStatsMapper;
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
+    private final LinkOsStatsMapper linkOsStatsMapper;
 
 
     @Value("${shortlink.stats.locale.amap-key}")
@@ -333,12 +328,17 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                         .build();
                 linkLocaleStatsMapper.shortLinkLocaleStats(linkLocaleStatsDO);
             }
-
+            LinkOsStatsDO linkOsStatsDO = LinkOsStatsDO.builder()
+                    .fullShortUrl(fullShortUrl)
+                    .cnt(1)
+                    .gid(gid)
+                    .date(new Date())
+                    .os(LinkUtil.getOs((HttpServletRequest) request))
+                    .build();
+            linkOsStatsMapper.shortLinkOsStats(linkOsStatsDO);
         } catch (Exception e) {
             log.error("短链接访问量统计一异常", e);
         }
-
-
     }
 
     private String generateSuffix(ShortLinkCreateReqDTO requestParam) {
