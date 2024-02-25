@@ -1,4 +1,4 @@
-package com.sgq.shortlink.admin.util;
+package com.sgq.shortlink.admin.toolkit;
 
 import java.util.Random;
 

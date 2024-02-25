@@ -14,7 +14,7 @@ import com.sgq.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
 import com.sgq.shortlink.admin.remote.ShortLinkRemoteService;
 import com.sgq.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.sgq.shortlink.admin.service.GroupService;
-import com.sgq.shortlink.admin.util.RandomStringUtil;
+import com.sgq.shortlink.admin.toolkit.RandomStringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
