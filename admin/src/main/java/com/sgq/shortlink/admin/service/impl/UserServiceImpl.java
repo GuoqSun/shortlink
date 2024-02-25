@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sgq.shortlink.admin.common.convention.exception.ClientException;
+import com.sgq.shortlink.admin.common.convention.exception.ServiceException;
 import com.sgq.shortlink.admin.dao.entity.UserDO;
 import com.sgq.shortlink.admin.dao.mapper.UserMapper;
 import com.sgq.shortlink.admin.dto.req.UserLoginReqDTO;
@@ -51,7 +52,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                 .eq(UserDO::getUsername, username);
         UserDO userDO = baseMapper.selectOne(queryWrapper);
         if (userDO == null) {
-            throw new ClientException(USER_NULL);
+            throw new ServiceException(USER_NULL);
         }
         UserRespDTO result = new UserRespDTO();
         BeanUtils.copyProperties(userDO, result);
