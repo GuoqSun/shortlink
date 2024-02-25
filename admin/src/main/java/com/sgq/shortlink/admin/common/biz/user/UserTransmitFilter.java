@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+import static com.sgq.shortlink.admin.common.constant.RedisCacheConstant.USER_LOGIN_KRY;
 import static com.sgq.shortlink.admin.common.enums.UserErrorCodeEnum.USER_TOKEN_FAIL;
 
 /**
@@ -24,8 +25,8 @@ public class UserTransmitFilter implements Filter {
     private final StringRedisTemplate stringRedisTemplate;
 
     private static final List<String> IGNORE_URI = Lists.newArrayList(
-            "/api/shortlink/admin/v1/user/login",
-            "/api/shortlink/admin/v1/actual/user/has-username"
+            "/api/short-link/admin/v1/user/login",
+            "/api/short-link/admin/v1/actual/user/has-username"
     );
 
     @Override
@@ -42,7 +43,7 @@ public class UserTransmitFilter implements Filter {
                 }
                 Object userInfoJsonStr = null;
                 try {
-                    userInfoJsonStr = stringRedisTemplate.opsForHash().get("login_" + username, token);
+                    userInfoJsonStr = stringRedisTemplate.opsForHash().get(USER_LOGIN_KRY + username, token);
                     if (userInfoJsonStr == null) {
                         throw new ClientException(USER_TOKEN_FAIL);
                         // TODO 等待和网关一起实现

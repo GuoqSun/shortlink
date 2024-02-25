@@ -46,7 +46,9 @@ public class MessageQueueIdempotentHandler {
      */
     public void setAccomplish(String messageId) {
         String key = IDEMPOTENT_KEY_PREFIX + messageId;
-        stringRedisTemplate.opsForValue().set(key, "1", 10, TimeUnit.MINUTES);
+        if (Objects.equals(stringRedisTemplate.opsForValue().get(key), "0")) {
+            stringRedisTemplate.opsForValue().set(key, "1", 10, TimeUnit.MINUTES);
+        }
     }
 
     /**
