@@ -13,6 +13,7 @@ spring:
     redis:
       host: localhost
       port: 6379
+      password: Sun1015263819n
   cloud:
     nacos:
       discovery:

@@ -11,6 +11,7 @@ spring:
     redis:
       host: 127.0.0.1
       port: 6379
+      password: Sun1015263819n
   mvc:
     view:
       prefix: /templates/
@@ -34,7 +35,7 @@ short-link:
     default: nurl.ink:8003
   stats:
     locale:
-      amap-key: 824c511f0997586ea016f979fdb23087
+      amap-key: de17f97261c693e08afdf6df65f4133d
   goto-domain:
     white-list:
       enable: true
