@@ -1,6 +1,7 @@
 package com.sgq.shortlink.project.mq.consumer;
 
-import com.sgq.shortlink.admin.common.convention.exception.ServiceException;
+
+import com.sgq.shortlink.project.common.convention.exception.ServiceException;
 import com.sgq.shortlink.project.dto.biz.ShortLinkStatsRecordDTO;
 import com.sgq.shortlink.project.mq.idempotent.MessageQueueIdempotentHandler;
 import com.sgq.shortlink.project.service.ShortLinkService;

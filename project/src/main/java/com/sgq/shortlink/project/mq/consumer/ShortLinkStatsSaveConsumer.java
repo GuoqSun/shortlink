@@ -8,7 +8,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.sgq.shortlink.admin.common.convention.exception.ServiceException;
+import com.sgq.shortlink.project.common.convention.exception.ServiceException;
 import com.sgq.shortlink.project.dao.entity.LinkAccessLogsDO;
 import com.sgq.shortlink.project.dao.entity.LinkAccessStatsDO;
 import com.sgq.shortlink.project.dao.entity.LinkBrowserStatsDO;
