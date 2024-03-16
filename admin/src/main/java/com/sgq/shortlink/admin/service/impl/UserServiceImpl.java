@@ -107,6 +107,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     @Override
     public UserLoginRespDTO login(UserLoginReqDTO requestParam) {
+        // 查询用户数据是否在数据库
         LambdaQueryWrapper<UserDO> queryWrapper = Wrappers.lambdaQuery(UserDO.class)
                 .eq(UserDO::getUsername, requestParam.getUsername())
                 .eq(UserDO::getPassword, requestParam.getPassword())
@@ -115,25 +116,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if (userDO == null) {
             throw new ClientException("用户不存在");
         }
+        // 检查用户是否已经登陆
         Map<Object, Object> hasLoginMap = stringRedisTemplate.opsForHash().entries(USER_LOGIN_KRY + requestParam.getUsername());
+        // 如果已经登陆
         if (CollUtil.isNotEmpty(hasLoginMap)) {
+            // 更新过期时间
             stringRedisTemplate.expire(USER_LOGIN_KRY + requestParam.getUsername(), 30L, TimeUnit.MINUTES);
+            // 从Redis中获取已经存储的token
             String token = hasLoginMap.keySet().stream()
                     .findFirst()
                     .map(Object::toString)
                     .orElseThrow(() -> new ClientException("用户登陆错误"));
             return new UserLoginRespDTO(token);
         }
-        /*
-        Hash结构
-        Key：login_用户名
-        Value：
-            Key：token标识
-            Value：JSON字符串（用户信息）
-        */
+        // 为首次登陆或会话过期的用户创建新的登陆会话
         String uuid = UUID.randomUUID().toString();
         stringRedisTemplate.opsForHash().put(USER_LOGIN_KRY + requestParam.getUsername(), uuid, JSON.toJSONString(userDO));
         stringRedisTemplate.expire(USER_LOGIN_KRY + requestParam.getUsername(), 30L, TimeUnit.MINUTES);
+        // 无论是否已经登陆，都返回用户token
         return new UserLoginRespDTO(uuid);
     }
 
