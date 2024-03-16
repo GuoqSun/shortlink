@@ -67,30 +67,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     @Override
     public void register(UserRegisterReqDTO requestParam) {
+        // 检查用户名是否已经存在
         if (!hasUsername(requestParam.getUsername())) {
             throw new ClientException(USER_NAME_EXIST);
         }
+        // 获得分布式锁
         RLock lock = redissonClient.getLock(LOCK_USER_REGISTER_KEY + requestParam.getUsername());
         try {
+            // 尝试获取锁
             if (lock.tryLock()) {
                 try {
                     int inserted = baseMapper.insert(BeanUtil.toBean(requestParam, UserDO.class));
                     if (inserted < 1) {
+                        // 用户数据保存失败
                         throw new ClientException(USER_SAVE_ERROR);
                     }
                 } catch (DuplicateKeyException ex) {
                     throw new ClientException(USER_EXIST);
                 }
+                // 注册成功，更新布隆过滤器，添加新注册的用户名
                 userRegisterCachePenetrationBloomFilter.add(requestParam.getUsername());
-
+                // 创建默认分组
                 groupService.saveGroup(requestParam.getUsername(), "默认分组");
                 return;
             }
             throw new ClientException(USER_NAME_EXIST);
         } finally {
+            // 释放锁，避免死锁情况
             lock.unlock();
         }
-
     }
 
     @Override
