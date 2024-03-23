@@ -139,8 +139,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
                 .eq(GroupDO::getGid, gid)
                 .eq(GroupDO::getUsername, Optional.ofNullable(username).orElse(UserContext.getUsername()));
-        //TODO 设置用户名
-
         GroupDO hasGroupFlag = baseMapper.selectOne(queryWrapper);
         return hasGroupFlag == null;
     }

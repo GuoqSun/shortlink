@@ -5,13 +5,6 @@
         <div class="header">
           <div @click="toMySpace" class="logo">SaaS短链接平台</div>
           <div style="display: flex; align-items: center">
-            <a
-                class="link-span"
-                style="text-decoration: none"
-                target="_blank"
-                href="http://gq-sun.com"
-            >作者个人博客</a
-            >
             <el-dropdown>
               <div class="block">
                 <span

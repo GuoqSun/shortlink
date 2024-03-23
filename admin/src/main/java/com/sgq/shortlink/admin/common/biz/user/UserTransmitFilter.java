@@ -29,6 +29,7 @@ public class UserTransmitFilter implements Filter {
         try {
             filterChain.doFilter(servletRequest, servletResponse);
         } finally {
+            // 防止内存泄漏
             UserContext.removeUser();
         }
     }
