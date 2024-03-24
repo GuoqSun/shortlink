@@ -197,17 +197,22 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateShortLink(ShortLinkUpdateReqDTO requestParam) {
+        // 验证原始URL是否在白名单中
         verificationWhitelist(requestParam.getOriginUrl());
+        // 查询与请求参数匹配的短链接记录
         LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                 .eq(ShortLinkDO::getGid, requestParam.getOriginGid())
                 .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
                 .eq(ShortLinkDO::getDelFlag, 0)
                 .eq(ShortLinkDO::getEnableStatus, 0);
         ShortLinkDO hasShortLinkDO = baseMapper.selectOne(queryWrapper);
+        // 如果未找到对应的短链接记录，抛出客户端异常
         if (hasShortLinkDO == null) {
             throw new ClientException("短链接记录不存在");
         }
+        // 执行更新操作
         if (Objects.equals(hasShortLinkDO.getGid(), requestParam.getGid())) {
+            // 如果新gid和原始gid一致
             LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
                     .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
                     .eq(ShortLinkDO::getGid, requestParam.getGid())
@@ -227,6 +232,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .build();
             baseMapper.update(shortLinkDO, updateWrapper);
         } else {
+            // 如果分组gid不一致，使用分布式锁确保短链接更新的原子性
             RReadWriteLock readWriteLock = redissonClient.getReadWriteLock(String.format(LOCK_GID_UPDATE_KEY, requestParam.getFullShortUrl()));
             RLock rLock = readWriteLock.writeLock();
             if (!rLock.tryLock()) {
@@ -372,34 +378,46 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @SneakyThrows
     @Override
     public void restoreUrl(String shortUri, ServletRequest request, ServletResponse response) {
+        // 获取服务器名称和端口，构建完整到短链接URL
         String serverName = request.getServerName();
         String serverPort = Optional.of(request.getServerPort())
-                .filter(each -> !Objects.equals(each, 80))
+                .filter(each -> !Objects.equals(each, 80))  // 端口不是80则保留
                 .map(String::valueOf)
                 .map(each -> ":" + each)
-                .orElse("");
+                .orElse(""); // 如果是80端口，就不添加端口信息
         String fullShortUrl = serverName + serverPort + "/" + shortUri;
+
+        // 尝试从Redis中获取原始链接
         String originalLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
+        // 如果Redis中存在原始链接，记录统计信息，直接重定向
         if (StrUtil.isNotBlank(originalLink)) {
             ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, request, response);
             shortLinkStats(fullShortUrl, null, statsRecord);
             ((HttpServletResponse) response).sendRedirect(originalLink);
             return;
         }
+        // 使用布隆过滤器检查链接是否存在
         boolean contains = shortUriCreateCachePenetrationBloomFilter.contains(fullShortUrl);
         if (!contains) {
+            // 不存在，重定向到404页面
             ((HttpServletResponse) response).sendRedirect("/page/notfound");
             return;
         }
+        // 检查短链接是否有效
         String gotoIsNullShortLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(gotoIsNullShortLink)) {
+            // 无效，重定向到404页面
             ((HttpServletResponse) response).sendRedirect("/page/notfound");
             return;
         }
 
+        // 分布式锁，保证下面查询和更新操作的原子性，防止缓存击穿
         RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK_KEY, fullShortUrl));
         lock.lock();
         try {
+            // 双重判定，再次判定是不是能在Redis中查询到短链接
+            // 因为缓存击穿时，可能多个相同请求的key拿到锁，只有第一个是能查数据库的，后续拿到锁的key先查redis
+            // 降低数据库的压力
             originalLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalLink)) {
                 ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, request, response);
@@ -407,13 +425,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 ((HttpServletResponse) response).sendRedirect(originalLink);
                 return;
             }
+            // 查询短链接跳转记录
             LambdaQueryWrapper<ShortLinkGotoDO> linkGotoQueryWrapper = Wrappers.lambdaQuery(ShortLinkGotoDO.class).eq(ShortLinkGotoDO::getFullShortUrl, fullShortUrl);
             ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(linkGotoQueryWrapper);
+            // 没有找到记录
             if (shortLinkGotoDO == null) {
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.MINUTES);
                 ((HttpServletResponse) response).sendRedirect("/page/notfound");
                 return;
             }
+            // 查询短链接详细信息
             LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                     .eq(ShortLinkDO::getGid, shortLinkGotoDO.getGid())
                     .eq(ShortLinkDO::getFullShortUrl, fullShortUrl)
@@ -425,13 +446,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 ((HttpServletResponse) response).sendRedirect("/page/notfound");
                 return;
             }
+            // 短链接有效，将其原始URL存入Redis缓存，后续请求通过双重判定锁，从redis中直接获取短链接，不必再查数据库
             stringRedisTemplate.opsForValue().set(
                     String.format(GOTO_SHORT_LINK_KEY, fullShortUrl),
                     shortLinkDO.getOriginUrl(),
                     LinkUtil.getLinkCacheValidDate(shortLinkDO.getValidDate()),
                     TimeUnit.MILLISECONDS);
+            // 更新短链接统计信息
             ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, request, response);
             shortLinkStats(fullShortUrl, shortLinkDO.getGid(), statsRecord);
+            // 重定向到原始URL
             ((HttpServletResponse) response).sendRedirect(shortLinkDO.getOriginUrl());
         } finally {
             lock.unlock();
