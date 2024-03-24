@@ -90,12 +90,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam) {
+        // 验证原始URL是否在白名单中
         verificationWhitelist(requestParam.getOriginUrl());
+        // 生成后缀
         String shortLinkSuffix = generateSuffix(requestParam);
+        // 构建完整的短链接URL
         String fullShortUrl = StrBuilder.create(createShortLinkDefaultDomain)
                 .append("/")
                 .append(shortLinkSuffix)
                 .toString();
+        // 构建短链接对象
         ShortLinkDO shortLinkDO = ShortLinkDO.builder()
                 .domain(createShortLinkDefaultDomain)
                 .originUrl(requestParam.getOriginUrl())
@@ -113,6 +117,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .fullShortUrl(fullShortUrl)
                 .favicon(getFavicon(requestParam.getOriginUrl()))
                 .build();
+        // 构建用于跟踪短链接跳转的对象
         ShortLinkGotoDO LinkGotoDO = ShortLinkGotoDO.builder()
                 .fullShortUrl(fullShortUrl)
                 .gid(requestParam.getGid())
@@ -121,14 +126,17 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             baseMapper.insert(shortLinkDO);
             shortLinkGotoMapper.insert(LinkGotoDO);
         } catch (DuplicateKeyException duplicateKeyException) {
+            // 捕捉到重复键值异常，布隆过滤器出现了误判
             log.warn("短链接：{} 重复入库", fullShortUrl);
             throw new ServiceException(String.format("短链接：%s 生成重复", fullShortUrl));
         }
+        // 将短链接和其原始URL存储到Redis中，并设置有效期
         stringRedisTemplate.opsForValue().set(
                 String.format(GOTO_SHORT_LINK_KEY, fullShortUrl),
                 requestParam.getOriginUrl(),
                 LinkUtil.getLinkCacheValidDate(requestParam.getValidDate()),
                 TimeUnit.MILLISECONDS);
+        // 将生成到短链接添加到布隆过滤器中
         shortUriCreateCachePenetrationBloomFilter.add(fullShortUrl);
         return ShortLinkCreateRespDTO.builder()
                 .fullShortUrl("http://" + shortLinkDO.getFullShortUrl())
@@ -488,18 +496,22 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private String generateSuffix(ShortLinkCreateReqDTO requestParam) {
         String shortUri;
         int customGenerateCount = 0;
+        // 循环直到生成一个唯一的短链接后缀或达到生成尝试的上限
         while (true) {
+            // 如果尝试生成次数超过10次，则抛出服务异常
             if (customGenerateCount > 10) {
                 throw new ServiceException("短链接频繁生成，请稍后再试");
             }
+            // 获取请求参数中的原始URL并附加一个随机UUID，以保证每次生成的哈希值的唯一性
             String originUrl = requestParam.getOriginUrl();
             originUrl += UUID.randomUUID().toString();
             shortUri = HashUtil.hashToBase62(originUrl);
+            // 检查生成的短链接后缀是否已经存在于布隆过滤器中
             if (!shortUriCreateCachePenetrationBloomFilter.contains(createShortLinkDefaultDomain + "/" + shortUri)) {
+                // 唯一，跳出循环
                 break;
             }
             customGenerateCount++;
-
         }
         return shortUri;
     }
