@@ -86,20 +86,27 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     @Override
     public List<ShortLinkGroupRespDTO> listGroup() {
+        // 创建一个查询包装器，用于获取未被删除（delFlag = 0）且属于当前认证用户的分组
+        // 并按照sortOrder和updateTime进行降序排序
         LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
                 .eq(GroupDO::getDelFlag, 0)
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(GroupDO::getSortOrder, GroupDO::getUpdateTime);
         List<GroupDO> groupDOList = baseMapper.selectList(queryWrapper);
+        // 调用外部服务，根据GID获取每个分组的短链接数量
         Result<List<ShortLinkGroupCountQueryRespDTO>> listResult = shortLinkActualRemoteService
                 .listGroupShortLinkCount(groupDOList.stream().map(GroupDO::getGid).toList());
+        // 将分组实体列表复制转换为分组响应DTO列表
         List<ShortLinkGroupRespDTO> shortLinkGroupRespDTOList = BeanUtil.copyToList(groupDOList, ShortLinkGroupRespDTO.class);
+        // 遍历每个分组响应DTO，为其设置短链接数量
         shortLinkGroupRespDTOList.forEach(each -> {
             Optional<ShortLinkGroupCountQueryRespDTO> first = listResult.getData().stream()
                     .filter(item -> Objects.equals(item.getGid(), each.getGid()))
                     .findFirst();
+            // 如果找到相应的短链接计数，就设置到当前分组响应DTO中
             first.ifPresent(item -> each.setShortLinkCount(first.get().getShortLinkCount()));
         });
+        // 返回处理好的分组响应DTO列表
         return shortLinkGroupRespDTOList;
     }
 
