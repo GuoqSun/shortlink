@@ -7,6 +7,8 @@ import cn.hutool.core.lang.hash.MurmurHash;
  */
 public class HashUtil {
 
+    // 字符数组定义了base62编码字符集。
+    // 它包括数字0-9，大写字母A-Z，以及小写字母a-z。
     private static final char[] CHARS = new char[]{
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -15,6 +17,7 @@ public class HashUtil {
 
     private static final int SIZE = CHARS.length;
 
+    // 将十进制转换为base62编码
     private static String convertDecToBase62(long num) {
         StringBuilder sb = new StringBuilder();
         while (num > 0) {
@@ -26,8 +29,8 @@ public class HashUtil {
     }
 
     public static String hashToBase62(String str) {
-        int i = MurmurHash.hash32(str);
+        int i = MurmurHash.hash32(str);  // 使用MurmurHash算法生成32位哈希值。
         long num = i < 0 ? Integer.MAX_VALUE - (long) i : i;
-        return convertDecToBase62(num);
+        return convertDecToBase62(num);  // 转换哈希值为base62编码。
     }
 }
