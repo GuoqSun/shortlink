@@ -47,22 +47,26 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     @Override
     public void saveGroup(String groupName) {
+        // 调用重载的方法，从用户上下文中提取用户名
         this.saveGroup(UserContext.getUsername(), groupName);
     }
 
     @Override
     public void saveGroup(String username, String groupName) {
+        // 使用Redisson获得一个分布式锁
         RLock lock = redissonClient.getLock(String.format(LOCK_GROUP_CREATE_KEY, username));
-        lock.lock();
+        lock.lock(); //尝试获取锁
         try {
             LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
                     .eq(GroupDO::getUsername, username)
                     .eq(GroupDO::getDelFlag, 0);
             List<GroupDO> groupDOList = baseMapper.selectList(queryWrapper);
+            // 检查已存在的分组数量是否已经达到最大限制
             if (CollUtil.isNotEmpty(groupDOList) && groupDOList.size() == groupMaxNum) {
                 throw new ClientException(String.format("已超出最大分组数：%d", groupMaxNum));
             }
             String gid;
+            // 循环生成一个gid，直到gid唯一
             do {
                 gid = RandomStringUtil.generateRandomString();
             } while (!hasGid(username, gid));
@@ -75,9 +79,9 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
                     .build();
             baseMapper.insert(groupDO);
         } finally {
+            // 释放锁
             lock.unlock();
         }
-
     }
 
     @Override
