@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 用户操作流量风控配置文件
+ * 用户操作流量风控配置类
  */
 @Data
 @Component
