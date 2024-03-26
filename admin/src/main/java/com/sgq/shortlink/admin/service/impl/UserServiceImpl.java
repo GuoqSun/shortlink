@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.sgq.shortlink.admin.common.biz.user.UserContext;
 import com.sgq.shortlink.admin.common.convention.exception.ClientException;
 import com.sgq.shortlink.admin.common.convention.exception.ServiceException;
 import com.sgq.shortlink.admin.dao.entity.UserDO;
@@ -29,6 +30,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.sgq.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
@@ -73,25 +75,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         }
         // 获得分布式锁
         RLock lock = redissonClient.getLock(LOCK_USER_REGISTER_KEY + requestParam.getUsername());
+        // 拿不到锁，用户名已存在
+        if (!lock.tryLock()) {
+            throw new ClientException(USER_EXIST);
+        }
+        // 尝试获取锁
         try {
-            // 尝试获取锁
-            if (lock.tryLock()) {
-                try {
-                    int inserted = baseMapper.insert(BeanUtil.toBean(requestParam, UserDO.class));
-                    if (inserted < 1) {
-                        // 用户数据保存失败
-                        throw new ClientException(USER_SAVE_ERROR);
-                    }
-                } catch (DuplicateKeyException ex) {
-                    throw new ClientException(USER_EXIST);
-                }
-                // 注册成功，更新布隆过滤器，添加新注册的用户名
-                userRegisterCachePenetrationBloomFilter.add(requestParam.getUsername());
-                // 创建默认分组
-                groupService.saveGroup(requestParam.getUsername(), "默认分组");
-                return;
+            int inserted = baseMapper.insert(BeanUtil.toBean(requestParam, UserDO.class));
+            if (inserted < 1) {
+                // 用户数据保存失败
+                throw new ClientException(USER_SAVE_ERROR);
             }
-            throw new ClientException(USER_NAME_EXIST);
+            // 注册成功，更新布隆过滤器，添加新注册的用户名
+            userRegisterCachePenetrationBloomFilter.add(requestParam.getUsername());
+            // 创建默认分组
+            groupService.saveGroup(requestParam.getUsername(), "默认分组");
+        } catch (DuplicateKeyException ex) {
+            throw new ClientException(USER_EXIST);
         } finally {
             // 释放锁，避免死锁情况
             lock.unlock();
@@ -100,6 +100,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     @Override
     public void update(UserUpdateReqDTO requestParam) {
+        if (!Objects.equals(requestParam.getUsername(), UserContext.getUsername())) {
+            throw new ClientException("当前登陆用户修改请求异常");
+        }
         LambdaUpdateWrapper<UserDO> updateWrapper = Wrappers.lambdaUpdate(UserDO.class)
                 .eq(UserDO::getUsername, requestParam.getUsername());
         baseMapper.update(BeanUtil.toBean(requestParam, UserDO.class), updateWrapper);
