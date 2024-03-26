@@ -79,6 +79,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
         } catch (Throwable ex) {
             messageQueueIdempotentHandler.delMessagePrecessed(id.toString());
             log.error("记录短链接监控消费异常", ex);
+            throw ex;
         }
         messageQueueIdempotentHandler.setAccomplish(id.toString());
     }
