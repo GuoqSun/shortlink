@@ -82,8 +82,10 @@ public class ShortLinkStatsSaveConsumer implements RocketMQListener<Map<String, 
         if (!messageQueueIdempotentHandler.isMessagePrecessed(keys)) {
             // 判断当前的这个消息流程是否执行完成
             if (messageQueueIdempotentHandler.isAccomplish(keys)) {
+                // 已经处理完成，直接返回
                 return;
             }
+            // 业务未完成
             throw new ServiceException("消息未完成流程，需要消息队列重试");
         }
         try {
@@ -97,6 +99,7 @@ public class ShortLinkStatsSaveConsumer implements RocketMQListener<Map<String, 
             log.error("记录短链接监控消费异常", ex);
             throw ex;
         }
+        // 完成消息处理，标记消息处理完成
         messageQueueIdempotentHandler.setAccomplish(keys);
     }
 
