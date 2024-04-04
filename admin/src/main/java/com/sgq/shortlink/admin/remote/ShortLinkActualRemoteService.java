@@ -154,7 +154,9 @@ public interface ShortLinkActualRemoteService {
     Result<Page<ShortLinkStatsAccessRecordRespDTO>> shortLinkStatsAccessRecord(@RequestParam("fullShortUrl") String fullShortUrl,
                                                                                @RequestParam("gid") String gid,
                                                                                @RequestParam("startDate") String startDate,
-                                                                               @RequestParam("endDate") String endDate);
+                                                                               @RequestParam("endDate") String endDate,
+                                                                               @RequestParam("current") Long current,
+                                                                               @RequestParam("size") Long size);
 
     /**
      * 访问分组短链接指定时间内监控访问记录数据
@@ -167,6 +169,8 @@ public interface ShortLinkActualRemoteService {
     @GetMapping("/api/short-link/v1/stats/access-record/group")
     Result<Page<ShortLinkStatsAccessRecordRespDTO>> groupShortLinkStatsAccessRecord(@RequestParam("gid") String gid,
                                                                                     @RequestParam("startDate") String startDate,
-                                                                                    @RequestParam("endDate") String endDate);
+                                                                                    @RequestParam("endDate") String endDate,
+                                                                                    @RequestParam("current") Long current,
+                                                                                    @RequestParam("size") Long size);
 
 }
