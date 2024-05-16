@@ -101,6 +101,10 @@
       </div>
     </div>
     <div ref="vantaRef" class="vanta"></div>
+    <!-- 备案号显示区域 -->
+    <div class="record-number">
+      <p>© 2024 易链分享 版权所有 | <a href="https://beian.miit.gov.cn/" target="_blank">陕ICP备2024028915号</a></p>
+    </div>
   </div>
   <el-dialog v-model="isWC" title="人机验证" width="40%" :before-close="handleClose">
     <div class="verification-flex">
@@ -403,6 +407,25 @@ const changeLogin = () => {
     text-align: center;
     margin-top: 1rem;
   }
+
+  /* 添加备案号的样式 */
+  .record-number {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .record-number a {
+    color: #fff; /* 设置链接文字颜色 */
+    text-decoration: none; /* 去除下划线 */
+  }
+
+  .record-number a:hover {
+    text-decoration: underline; /* 鼠标悬停时显示下划线 */
+  }
 }
 
 /deep/ .el-form-item__content {
@@ -437,6 +460,25 @@ const changeLogin = () => {
   left: 0;
   bottom: 0;
   z-index: 0;
+}
+
+/* 添加备案号的样式 */
+.record-number {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  font-size: 14px;
+}
+
+.record-number a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.record-number a:hover {
+  text-decoration: underline;
 }
 
 .logon {
